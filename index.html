@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chronicle AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel='stylesheet' href='https://cdn-uicons.flaticon.com/uicons-regular-rounded/css/uicons-regular-rounded.css'>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/9000.0.1/themes/prism-okaidia.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.25.0/components/prism-javascript.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500&display=swap" rel="stylesheet">
+    <link rel="shortcut icon" href="favicon.svg" type="image/svg+xml" style="filter: invert(1);">
+    <script src="https://kit.fontawesome.com/16194211d5.js" crossorigin="anonymous"></script>
+</head>
+<style>
+    pre[class*="language-"] {
+        background-color: #161618; /* Ganti dengan warna latar belakang yang Anda inginkan */
+        padding: 15px;
+        border-radius: 5px;
+        overflow: auto;
+    }
+</style>
+
+<body>
+    <nav>
+        <div class="navbar">
+            <div class="logo"><img src="logo.svg" alt="Logo" style="filter: invert(1);"></div>
+            <ul>
+                <li><a href="#" class="menu-chat active">AI Chat</a></li>
+                <li><a href="#" class="menu-vid">AI Images</a></li>
+                <li><a href="#" class="menu-img">AI Summarizer</a></li>
+                <li><a href="#" class="menu-changelog">Changelog</a></li>
+            </ul>
+        </div>
+    </nav>
+    <div class="chat-container">
+        <div class="chat" id="chat">
+            <!-- User's message with profile -->
+            <div class="user-message">
+                <div class="message-container">
+                    <div class="profile user-profile"></div>
+                    <div class="message">Halo, apa kabar?</div>
+                </div>
+            </div>
+        
+            <!-- AI's response with profile -->
+            <div class="ai-message">
+                <div class="message-container">
+                    <div class="profile ai-profile"></div>
+                    <img src="favicon.svg" alt="Profil AI" class="profimg">
+                    <div class="message">Halo! Saya baik, terima kasih. Bagaimana dengan Anda?</div>
+                </div>
+            </div>    
+        </div>
+        <!-- Input box -->
+        <div class="input-container">
+            <form id="chat-form">
+                <input type="text" style="font-family: 'Poppins', sans-serif;" id="user-input" name="user_input" placeholder="Ask me anything...">
+                <div class="send-button" onclick="sendMessage()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15px" height="15px" viewBox="0 0 20 20"><path fill="gray" d="m0 0l20 10L0 20zm0 8v4l10-2z"/></svg>                </div>
+            </form>
+        </div>
+
+        <script>
+           
+
+            document.getElementById('user-input').addEventListener('keydown', function (event) {
+                if (event.keyCode === 13) {
+                    event.preventDefault();
+                    sendMessage();
+                }
+            });
+
+
+            function sendMessage() {
+                var chatForm = document.getElementById('chat-form');
+                var userInput = chatForm.elements.user_input.value;
+                var chatContainer = document.getElementById('chat');
+
+                var userMessage = document.createElement('div');
+                userMessage.className = 'user-message';
+
+                var messageContainer = document.createElement('div');
+                messageContainer.className = 'message-container';
+                userMessage.appendChild(messageContainer);
+
+                var userProfile = document.createElement('div');
+                userProfile.className = 'profile user-profile';
+                messageContainer.appendChild(userProfile);
+
+                var messageContent = document.createElement('div');
+                messageContent.className = 'message';
+                messageContent.textContent = userInput;
+                messageContainer.appendChild(messageContent);
+
+                chatContainer.appendChild(userMessage);
+
+                fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=AIzaSyCb7eIuCj0WhXOAT8cDueEqgtMHcFZEJ_Y', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        "contents": [{
+                            "parts": [{
+                                "text": userInput
+                            }]
+                        }]
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    var aiMessage = document.createElement('div');
+                    aiMessage.className = 'ai-message';
+
+                    var aiMessageContainer = document.createElement('div');
+                    aiMessageContainer.className = 'message-container';
+                    aiMessage.appendChild(aiMessageContainer);
+
+                    var aiProfile = document.createElement('div');
+                    aiProfile.className = 'profile ai-profile';
+                    aiMessageContainer.appendChild(aiProfile);
+
+                    var aiProfileImg = document.createElement('img');
+                    aiProfileImg.src = "favicon.svg";
+                    aiProfileImg.alt = 'Profil AI';
+                    aiProfileImg.className = 'profimg';
+                    aiMessageContainer.appendChild(aiProfileImg);
+
+                    var aiMessageContent = document.createElement('div');
+                    aiMessageContent.className = 'message';
+                    aiMessageContainer.appendChild(aiMessageContent);
+
+                    var aiText = data.candidates[0].content.parts[0].text;
+
+                    function typeMessage(text, index = 0) {
+                        if (index < text.length) {
+                            aiMessageContent.textContent += text.charAt(index);
+                            setTimeout(() => typeMessage(text, index + 1), 25);
+                        } else {
+                            formatMessageContent(aiMessageContent);
+                        }
+                    }
+
+                    typeMessage(aiText);
+
+                    chatContainer.appendChild(aiMessage);
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+
+                chatForm.reset();
+            }
+
+            function formatMessageContent(element) {
+                const codeBlockRegex = /```([\s\S]*?)```/g;
+                const inlineCodeRegex = /`([^`]*)`/g;
+                const listRegex = /\d+\.\s.*?(?=\d+\.|$)/gs;
+                const boldRegex = /\*\*(.*?)\*\*/g;
+
+                let html = element.innerHTML;
+
+                html = html.replace(codeBlockRegex, (match, p1) => {
+                    return `<pre><code class="language-javascript">${Prism.highlight(p1, Prism.languages.javascript, 'javascript')}</code></pre>`;
+                });
+
+                html = html.replace(inlineCodeRegex, (match, p1) => {
+                    return `<code class="language-javascript">${Prism.highlight(p1, Prism.languages.javascript, 'javascript')}</code>`;
+                });
+
+                if (listRegex.test(html)) {
+                    const listItems = html.match(listRegex);
+                    if (listItems) {
+                        const listHtml = listItems.map(item => `<li>${item.trim()}</li>`).join('');
+                        html = html.replace(listRegex, `<ol>${listHtml}</ol>`);
+                    }
+                }
+
+                html = html.replace(boldRegex, (match, p1) => {
+                    return `<b>${p1}</b>`;
+                });
+
+                element.innerHTML = html;
+                Prism.highlightAllUnder(element);
+            }
+        </script>
+    </body>
+</html>
